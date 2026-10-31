@@ -224,6 +224,29 @@ class GameSessionTest {
         assertThrows(GameException.class, () -> game.tick(Double.POSITIVE_INFINITY, 0)); assertThrows(GameException.class, () -> game.tick(1, 0));
         assertThrows(GameException.class, () -> game.tick(0.01, 2)); assertThrows(GameException.class, () -> new GameSession(null));
     }
+    private ScorePopup activePopup() {
+        for (int i = 0; i < game.getPopupCount(); i++)
+            if (game.getPopup(i) != null && game.getPopup(i).isActive()) return game.getPopup(i);
+        return null;
+    }
+    @Test void destroyedBrickShowsFloatingScoreThatRisesAndFades() {
+        hit(game.getBrick(0));
+        ScorePopup popup = activePopup();
+        assertNotNull(popup); assertEquals(200, popup.getPoints());
+        double y = popup.getY(); double opacity = popup.getOpacity();
+        waitWithoutBallHits(1);
+        assertTrue(popup.getY() < y); assertTrue(popup.getOpacity() < opacity);
+        waitWithoutBallHits(8);
+        assertFalse(popup.isActive());
+    }
+    @Test void armourCrackShowsNoScorePopup() {
+        clearStage(); game.chooseUpgrade(game.getOffers()[0]);
+        hit(game.getBrick(0));
+        assertEquals(1, game.getBrick(0).getHealth()); assertNull(activePopup());
+    }
+    @Test void invalidPopupPointsRejected() {
+        assertThrows(GameException.class, () -> new ScorePopup(0, 0, 0));
+    }
     @Test void menuStopsRunAndClearsAttack() {
         game.launch(); game.menu(); game.tick(0.1, 1); assertEquals(GameState.MENU, game.getState()); assertEquals(0, game.getLaserTime());
     }

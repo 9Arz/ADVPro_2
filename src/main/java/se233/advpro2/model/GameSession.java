@@ -15,6 +15,7 @@ public class GameSession {
     private Ball ball = new Ball();
     private Brick[] bricks = new Brick[0];
     private Laser[] lasers = new Laser[40];
+    private ScorePopup[] popups = new ScorePopup[20];
     private Upgrade[] offers = new Upgrade[0];
     private int stage, score, lives, combo, charge, scoreBonus;
     private double speedFactor = 1, laserTime, laserCooldown, shotDelay;
@@ -32,7 +33,7 @@ public class GameSession {
         prepareStage();
         LOG.info("New run: three lives");
     }
-    public void menu() { state = GameState.MENU; clearLasers(); message = "Break bricks. Build your run."; }
+    public void menu() { state = GameState.MENU; clearLasers(); popups = new ScorePopup[20]; message = "Break bricks. Build your run."; }
     private void prepareStage() {
         int rows = stage + 2;
         bricks = new Brick[rows * 8];
@@ -42,7 +43,7 @@ public class GameSession {
             int points = (i % 7 == 0) ? 200 : 100;
             bricks[i] = new Brick(52 + column * 88, 60 + row * 34, health, points);
         }
-        offers = new Upgrade[0]; clearLasers(); paddle.center(); dockBall();
+        offers = new Upgrade[0]; clearLasers(); popups = new ScorePopup[20]; paddle.center(); dockBall();
         state = GameState.READY;
         message = "Stage " + stage + " ready - press SPACE to launch";
         LOG.info("Stage {} prepared with {} bricks", stage, bricks.length);
@@ -73,6 +74,7 @@ public class GameSession {
             if (state != GameState.READY && state != GameState.PLAYING) break;
             paddle.move(direction, step);
             for (Brick brick : bricks) brick.tick(step);
+            for (ScorePopup popup : popups) if (popup != null) popup.tick(step);
             if (state == GameState.READY) { dockBall(); continue; }
             moveBall(step);
             if (state != GameState.PLAYING) break;
@@ -115,6 +117,7 @@ public class GameSession {
             int earned = brick.getPoints() + scoreBonus;
             if (combo % 5 == 0) earned += 150;
             score += earned;
+            addPopup(brick.getX() + Brick.WIDTH / 2, brick.getY(), earned);
             message = "+" + earned + " points" + (combo % 5 == 0 ? " - combo bonus!" : "");
             LOG.info("Brick destroyed: +{}, score {}", earned, score);
         } else { message = "Armour cracked"; LOG.debug("Brick damaged; {} hit remaining", brick.getHealth()); }
@@ -198,6 +201,11 @@ public class GameSession {
             if (lasers[i] == null || !lasers[i].isActive()) { lasers[i] = new Laser(x, Paddle.Y); return; }
         }
     }
+    private void addPopup(double x, double y, int points) {
+        for (int i = 0; i < popups.length; i++) {
+            if (popups[i] == null || !popups[i].isActive()) { popups[i] = new ScorePopup(x, y, points); return; }
+        }
+    }
     private void clearLasers() {
         // A missed ball or stage change must not bypass the weapon's recovery time.
         if (laserTime > 0) laserCooldown = 8;
@@ -210,6 +218,8 @@ public class GameSession {
     public Brick getBrick(int index) { return bricks[index]; }
     public int getLaserCount() { return lasers.length; }
     public Laser getLaser(int index) { return lasers[index]; }
+    public int getPopupCount() { return popups.length; }
+    public ScorePopup getPopup(int index) { return popups[index]; }
     public Upgrade[] getOffers() { return offers.clone(); }
     public int getStage() { return stage; }
     public int getScore() { return score; }

@@ -21,6 +21,7 @@ public class GameView extends BorderPane {
     private Rectangle[] bricks = new Rectangle[0];
     private Label[] brickLabels = new Label[0];
     private final Rectangle[] lasers = new Rectangle[40];
+    private final Label[] popups = new Label[20];
     private final Button pause = new Button("Pause  [P]");
     private GameState lastState;
     private int lastStage = -1, tick;
@@ -29,7 +30,7 @@ public class GameView extends BorderPane {
 
     public GameView() {
         getStyleClass().add("root-pane");
-        Image sheet = new Image(GameView.class.getResourceAsStream("/se233/advpro2/ball-sprites.png"));
+        Image sheet = new Image(GameView.class.getResourceAsStream("/se233/advpro2/ball-sprites-new.png"));
         if (sheet.isError()) throw new GameException("The ball sprite sheet could not be loaded.");
         ball = new AnimatedSprite(sheet);
         Label brand = new Label("ORBIT / BREAKER"); brand.getStyleClass().add("brand");
@@ -82,6 +83,11 @@ public class GameView extends BorderPane {
             lasers[i] = new Rectangle(Laser.WIDTH, Laser.HEIGHT, Color.web("#f5cd71"));
             lasers[i].setVisible(false); arena.getChildren().add(lasers[i]);
         }
+        for (int i = 0; i < popups.length; i++) {
+            popups[i] = new Label();
+            popups[i].setStyle("-fx-text-fill: #f5cd71; -fx-font-weight: bold; -fx-font-size: 16;");
+            popups[i].setVisible(false); arena.getChildren().add(popups[i]);
+        }
         paddle.setHeight(Paddle.HEIGHT); paddle.setArcWidth(12); paddle.setArcHeight(12); paddle.setFill(Color.web("#8cf4df"));
         arena.getChildren().addAll(paddle, ball);
     }
@@ -113,6 +119,16 @@ public class GameView extends BorderPane {
             Laser laser = game.getLaser(i);
             lasers[i].setVisible(laser != null && laser.isActive());
             if (laser != null) { lasers[i].setX(laser.getX()); lasers[i].setY(laser.getY()); }
+        }
+        for (int i = 0; i < popups.length; i++) {
+            ScorePopup popup = game.getPopup(i);
+            boolean active = popup != null && popup.isActive();
+            popups[i].setVisible(active);
+            if (active) {
+                popups[i].setText("+" + popup.getPoints());
+                popups[i].setLayoutX(popup.getX() - 18); popups[i].setLayoutY(popup.getY());
+                popups[i].setOpacity(popup.getOpacity());
+            }
         }
         pause.setDisable(game.getState() != GameState.READY && game.getState() != GameState.PLAYING && game.getState() != GameState.PAUSED);
         pause.setText(game.getState() == GameState.PAUSED ? "Resume  [P]" : "Pause  [P]");

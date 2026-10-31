@@ -1,0 +1,12 @@
+# Maven build output
+target/
+
+# Runtime logs
+logs/
+
+# Scratch files (includes course PDF text)
+tmp/
+
+# IntelliJ IDEA settings
+.idea/
+*.iml
